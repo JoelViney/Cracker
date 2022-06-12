@@ -5,6 +5,8 @@ I saw some [Polly](https://github.com/App-vNext/Polly) code in an application an
 
 I had previously wirten my own [throttle and retry](https://github.com/JoelViney/XeroThrottleAndRetry) code for Xero so I thought I would try rolling my own version with Timeout for fun.
 
+Example:
+
 ```
 var result = await new CrackerBuilder()
     .Throttle(callLimit: 60, timePeriodMilliseconds: 60000)
