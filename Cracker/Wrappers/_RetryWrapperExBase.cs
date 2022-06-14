@@ -4,14 +4,22 @@ using Cracker.Rules;
 namespace Cracker.Wrappers
 {
     /// <summary>
-    /// Wrapper Base with Exceptions
+    /// Extends the wrapper base with Retry Specific functions.
     /// </summary>
-    internal abstract class WrapperExBase : WrapperBase
+    internal abstract class RetryWrapperExBase : WrapperBase
     {
         public List<IExceptionRule> UnlessExceptions { get; set; } = new List<IExceptionRule>();
         public List<IExceptionRule> WhenExceptions { get; set; } = new List<IExceptionRule>();
         public List<IResultRule> WhenResults { get; set; } = new List<IResultRule>();
-        
+
+        public Expression<Func<int, TimeSpan>> DelayExpression { get; set; }
+
+
+        public RetryWrapperExBase()
+        {
+            this.DelayExpression = (attempts) => TimeSpan.FromSeconds(Math.Pow(2, attempts));
+        }
+
 
         public void AddWhenException<T>() where T : Exception
         {

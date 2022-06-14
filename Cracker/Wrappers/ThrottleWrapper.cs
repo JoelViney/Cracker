@@ -8,15 +8,15 @@ namespace Cracker.Wrappers
     internal class ThrottleWrapper : WrapperBase
     {
         private readonly int _callLimit;
-        private readonly int _timePeriodMilliseconds;
+        private readonly TimeSpan _period;
 
         private readonly SemaphoreSlim _semaphore;
         private readonly Queue<long> _callTickStack;
 
-        internal ThrottleWrapper(int callLimit, int timePeriodMilliseconds)
+        internal ThrottleWrapper(int callLimit, TimeSpan period)
         {
             _callLimit = callLimit;
-            _timePeriodMilliseconds = timePeriodMilliseconds;
+            _period = period;
 
             _semaphore = new(1);
             _callTickStack = new(callLimit);
@@ -38,7 +38,7 @@ namespace Cracker.Wrappers
 
                     TimeSpan timeSpan = TimeSpan.FromTicks(nowTicks - callAtLimitTicks);
 
-                    var callLimitMilliseconds = _timePeriodMilliseconds;
+                    var callLimitMilliseconds = _period.TotalMilliseconds;
                     if (timeSpan.TotalMilliseconds < callLimitMilliseconds)
                     {
                         var millisecondsDelay = (int)(callLimitMilliseconds - Math.Round(timeSpan.TotalMilliseconds));

@@ -1,7 +1,7 @@
 
 # Cracker
 
-I saw some [Polly](https://github.com/App-vNext/Polly) code in an application and wondered why it was so complex...
+I saw some [Polly](https://github.com/App-vNext/Polly) code in an application and wondered why it was so complex... I deliberately didnt look at the Polly source code as it would throw my implementation.
 
 I had previously wirten my own [throttle and retry](https://github.com/JoelViney/XeroThrottleAndRetry) code for Xero so I thought I would try rolling my own version with Timeout for fun.
 
@@ -9,9 +9,10 @@ Example:
 
 ```
 var result = await new CrackerBuilder()
-    .Throttle(callLimit: 60, timePeriodMilliseconds: 60000)
-    .Timeout(timeoutMilliseconds: 1000)
-    .Retry(attempts: 3, retryIntervalMilliseconds: 100)
+    .Throttle(callLimit: 100, period: TimeSpan.FromSeconds(60))
+    .Timeout(TimeSpan.FromSeconds(1))
+    .Retry(retryAttempts: 3)
+    .WithDelayBetweenRetries(attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)))
     .UnessException<CustomException>()
     .UnessException<HttpException>(x => x.ErrorCode = 404)
     .ExecuteAsync(job.ExecuteAsync);
@@ -19,9 +20,18 @@ var result = await new CrackerBuilder()
 
 TODO:
 * Timeout applies to the entire call stack, it should only apply for the calls after it on the bulder.
-* I should add TimeSpans as they are more readable with big numbers.
-* I should add a retry durations instead of it being hard coded.
-* Circuit-Breaker? I get it, but its more a job concept.
-* There is prolly a whole lot more stuff in Polly that I havn't implemented.
+e.g.
+```
+// Timeout after 1 second, attempt up to 3 times, .
+var result = await new CrackerBuilder()
+    .Timeout(TimeSpan.FromSeconds(1))
+    .Retry(retryAttempts: 3)
+    .ExecuteAsync(job.ExecuteAsync);
 
-n.b. I deliberately didnt look at the Polly source code as it would throw my implementation.
+// vrs
+// Attempt 3 times, timeout after 1 second on each try.
+var result = await new CrackerBuilder()
+    .Retry(retryAttempts: 3)
+    .Timeout(TimeSpan.FromSeconds(1))
+    .ExecuteAsync(job.ExecuteAsync);
+```

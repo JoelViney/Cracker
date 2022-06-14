@@ -5,18 +5,15 @@ namespace Cracker.Wrappers
     /// <summary>
     /// Provides Retry on error functionality with minimal impact on the calling code.
     /// </summary>
-    internal class RetryWrapper : WrapperExBase
+    internal class RetryWrapper : RetryWrapperExBase
     {
-        public const int RetryIntervalMilliseconds = 1000;
+        private readonly int _attempts;
 
-        private readonly int _retryAttempts;
-        private readonly int _retryIntervalMilliseconds;
-
-        internal RetryWrapper(int retryAttempts, int retryIntervalMilliseconds = RetryIntervalMilliseconds)
+        internal RetryWrapper(int attempts) : base()
         {
-            _retryAttempts = retryAttempts;
-            _retryIntervalMilliseconds = retryIntervalMilliseconds;
+            _attempts = attempts;
         }
+
 
         public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func)
         {
@@ -24,11 +21,10 @@ namespace Cracker.Wrappers
 
             var exceptions = new List<Exception>();
 
-            // Attempt = 1, retry
-            var totalAttempts = _retryAttempts + 1;
-            for (int attempts = 1; attempts <= totalAttempts; attempts++)
+            var totalAttempts = _attempts + 1;
+            for (int attempt = 1; attempt <= totalAttempts; attempt++)
             {
-                Debug.WriteLine($"Retry Attempt: {attempts}");
+                Debug.WriteLine($"Attempt: {attempt}");
                 try
                 {
                     // Check for a cancellation request
@@ -37,10 +33,11 @@ namespace Cracker.Wrappers
                         throw new TimeoutException();
                     }
 
-                    if (attempts > 1)
+                    if (attempt > 1)
                     {
-                        var multiplier = (int)Math.Pow(2, attempts);
-                        await Task.Delay(_retryIntervalMilliseconds * multiplier);
+                        var comp = this.DelayExpression.Compile();
+                        var delay = comp.Invoke(attempt);
+                        await Task.Delay(delay);
                     }
 
                     // Check for a cancellation request

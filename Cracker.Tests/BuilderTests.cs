@@ -41,7 +41,7 @@ namespace Cracker
             // Act
             await new CrackerBuilder()
                 .Timeout(20)
-                .Retry(attempts: 3, retryIntervalMilliseconds: 1000)
+                .Retry(retryAttempts: 3)
                 .ExecuteAsync(job.ExecuteAsync);
 
             // Assert

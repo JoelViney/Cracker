@@ -39,25 +39,38 @@ namespace Cracker
 
         public CrackerBuilder Timeout(int timeoutMilliseconds)
         {
-            var command = new TimeoutWrapper(CancellationTokenSource, timeoutMilliseconds);
+            var command = new TimeoutWrapper(CancellationTokenSource, TimeSpan.FromMilliseconds(timeoutMilliseconds));
+            AddCommand(command);
+            return this;
+        }
+        public CrackerBuilder Timeout(TimeSpan period)
+        {
+            var command = new TimeoutWrapper(CancellationTokenSource, period);
             AddCommand(command);
             return this;
         }
 
-        public CrackerBuilderEx Retry(int attempts, int retryIntervalMilliseconds = RetryWrapper.RetryIntervalMilliseconds)
+        public CrackerBuilderExRetry Retry(int retryAttempts)
         {
-            var command = new RetryWrapper(attempts, retryIntervalMilliseconds);
+            var command = new RetryWrapper(retryAttempts);
             AddCommand(command);
-            return new CrackerBuilderEx(this);
+            return new CrackerBuilderExRetry(this);
+        }
+
+        public CrackerBuilder Throttle(int callLimit, TimeSpan period)
+        {
+            var command = new ThrottleWrapper(callLimit, period);
+            AddCommand(command);
+            return this;
         }
 
         public CrackerBuilder Throttle(int callLimit, int timePeriodMilliseconds)
         {
-            var command = new ThrottleWrapper(callLimit, timePeriodMilliseconds);
+            var command = new ThrottleWrapper(callLimit, TimeSpan.FromMilliseconds(timePeriodMilliseconds));
             AddCommand(command);
             return this;
         }
-        
+
 
 
         public async Task ExecuteAsync(Func<CancellationToken, Task> func)

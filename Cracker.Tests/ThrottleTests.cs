@@ -12,7 +12,7 @@ namespace Cracker
 
             // Act
             await new CrackerBuilder()
-                .Throttle(callLimit: 1, timePeriodMilliseconds: 1000)
+                .Throttle(callLimit: 1, period: TimeSpan.FromSeconds(1))
                 .ExecuteAsync(job.ExecuteAsync);
 
             // Assert
@@ -27,7 +27,7 @@ namespace Cracker
             var tickStart = DateTime.UtcNow.Ticks;
 
             var builder = new CrackerBuilder()
-                .Throttle(callLimit: 1, timePeriodMilliseconds: 100);
+                .Throttle(callLimit: 1, period: TimeSpan.FromSeconds(1));
 
             var timer = new TestTimer();
 

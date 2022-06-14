@@ -8,19 +8,20 @@ namespace Cracker.Wrappers
     internal class TimeoutWrapper : WrapperBase
     {
         private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly int _timeoutMilliseconds;
+        private readonly TimeSpan _period;
 
-        public TimeoutWrapper(CancellationTokenSource cancellationTokenSource, int timeoutMilliseconds)
+        public TimeoutWrapper(CancellationTokenSource cancellationTokenSource, TimeSpan period)
         {
             _cancellationTokenSource = cancellationTokenSource;
-            _timeoutMilliseconds = timeoutMilliseconds;
+            _period = period;
         }
 
         public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func)
         {
             Debug.WriteLine("Timeout Loaded.");
 
-            using var timer = new Timer(TimerCallback, new AutoResetEvent(false), _timeoutMilliseconds, 0);
+            var ms = (int)_period.TotalMilliseconds;
+            using var timer = new Timer(TimerCallback, new AutoResetEvent(false), ms, 0);
 
             return await this.ExecuteInternalAsync(func);
         }

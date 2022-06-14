@@ -132,8 +132,8 @@ namespace Cracker
             // Act
             await new CrackerBuilder()
                 .Retry(2)
-                .WhenException<FailingException>(x => x.Attempts == 1) // This will happen
-                .UnlessException<FailingException>(x => x.Attempts == 2) // This will happen
+                .WhenException<FailingException>(x => x.Attempts == 1)      // This will happen
+                .UnlessException<FailingException>(x => x.Attempts == 2)    // This will happen
                 .ExecuteAsync(job.ExecuteAsync);
 
             // Assert - Expecting an exception
