@@ -15,7 +15,7 @@ namespace Cracker.Wrappers
         }
 
 
-        public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func)
+        public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken token)
         {
             Debug.WriteLine("Retry Loaded.");
 
@@ -28,25 +28,25 @@ namespace Cracker.Wrappers
                 try
                 {
                     // Check for a cancellation request
-                    if (this.CancellationToken.IsCancellationRequested)
+                    if (token.IsCancellationRequested)
                     {
-                        throw new TimeoutException();
+                        throw new TaskCanceledException();
                     }
 
                     if (attempt > 1)
                     {
                         var comp = this.DelayExpression.Compile();
                         var delay = comp.Invoke(attempt);
-                        await Task.Delay(delay);
+                        await Task.Delay(delay, token);
                     }
 
                     // Check for a cancellation request
-                    if (this.CancellationToken.IsCancellationRequested)
+                    if (token.IsCancellationRequested)
                     {
-                        throw new TimeoutException();
+                        throw new TaskCanceledException();
                     }
 
-                    var result = await this.ExecuteInternalAsync<T>(func);
+                    var result = await this.ExecuteInternalAsync<T>(func, token);
 
                     if (this.MatchingWhenResult<T>(result))
                     {
@@ -55,7 +55,7 @@ namespace Cracker.Wrappers
 
                     return result;
                 }
-                catch (TimeoutException ex)
+                catch (TaskCanceledException ex)
                 {
                     if (this.MatchingWhenExceptions(ex))
                     {
@@ -63,6 +63,7 @@ namespace Cracker.Wrappers
                     }
 
                     exceptions.Add(ex);
+                    break;
                 }
                 catch (Exception ex)
                 {

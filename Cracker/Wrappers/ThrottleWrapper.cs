@@ -22,7 +22,7 @@ namespace Cracker.Wrappers
             _callTickStack = new(callLimit);
         }
 
-        public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func)
+        public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken token)
         {
             Debug.WriteLine("Throttle Loaded.");
 
@@ -30,6 +30,12 @@ namespace Cracker.Wrappers
 
             try
             {
+                // Check for a cancellation request
+                if (token.IsCancellationRequested)
+                {
+                    throw new TaskCanceledException();
+                }
+
                 // Check if we need to sleep
                 if (_callTickStack.Count >= _callLimit)
                 {
@@ -43,21 +49,15 @@ namespace Cracker.Wrappers
                     {
                         var millisecondsDelay = (int)(callLimitMilliseconds - Math.Round(timeSpan.TotalMilliseconds));
 
-                        // Check for a cancellation request
-                        if (this.CancellationToken.IsCancellationRequested)
-                        {
-                            throw new TimeoutException();
-                        }
-
                         Debug.WriteLine($"Throttle going to sleep for {millisecondsDelay}ms.");
-                        await Task.Delay(millisecondsDelay);
+                        await Task.Delay(millisecondsDelay, token);
                     }
                 }
 
                 // Check for a cancellation request
-                if (this.CancellationToken.IsCancellationRequested)
+                if (token.IsCancellationRequested)
                 {
-                    throw new TimeoutException();
+                    throw new TaskCanceledException();
                 }
 
                 // Enqueue the execution and Dequeue old executions if needed
@@ -69,7 +69,7 @@ namespace Cracker.Wrappers
                     _callTickStack.Dequeue(); // We only need to track as many calls as the call limit
                 }
 
-                return await this.ExecuteInternalAsync(func);
+                return await this.ExecuteInternalAsync(func, token);
             }
             finally
             {

@@ -5,18 +5,24 @@ namespace Cracker
     public class TimeoutTests
     {
         [TestMethod]
+        [ExpectedException(typeof(TaskCanceledException))]
         public async Task TimeoutBeforeJobFinished()
         {
             // Arrange
             var job = new SlowJobStub(milliseconds: 1000);
 
             // Act
-            await new CrackerBuilder()
-                .Timeout(20)
-                .ExecuteAsync(job.ExecuteAsync);
-
-            // Assert
-            Assert.IsFalse(job.Completed, "Failed to cancel on timeout.");
+            try
+            {
+                await new CrackerBuilder()
+                    .Timeout(20)
+                    .ExecuteAsync(job.ExecuteAsync);
+            }
+            finally
+            {
+                // Assert
+                Assert.IsFalse(job.Completed, "Failed to cancel on timeout.");
+            }
         }
 
         // Task takes 20ms, timeout is 100ms so task will complete
@@ -37,18 +43,24 @@ namespace Cracker
 
         // Task takes 100ms, timeout is 20ms so the task will timeout and not complete
         [TestMethod]
+        [ExpectedException(typeof(TaskCanceledException))]
         public async Task TimeoutBeforeJobFinishedWithResult()
         {
             // Arrange
             var job = new SlowJobStub(milliseconds: 100);
 
             // Act
-            await new CrackerBuilder()
-                .Timeout(20)
-                .ExecuteAsync(job.ExecuteAsync);
-
-            // Assert
-            Assert.IsFalse(job.Completed, "Failed to cancel on timeout.");
+            try
+            {
+                await new CrackerBuilder()
+                    .Timeout(20)
+                    .ExecuteAsync(job.ExecuteAsync);
+            }
+            finally
+            {
+                // Assert
+                Assert.IsFalse(job.Completed, "Failed to cancel on timeout.");
+            }
         }
     }
 }

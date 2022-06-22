@@ -6,9 +6,6 @@ namespace Cracker
 {
     public class CrackerBuilder
     {
-        internal CancellationTokenSource CancellationTokenSource { get; }
-        internal CancellationToken CancellationToken { get; }
-
         internal WrapperBase? Command { get; set; }
 
 
@@ -16,15 +13,11 @@ namespace Cracker
 
         public CrackerBuilder()
         {
-            this.CancellationTokenSource = new();
-            this.CancellationToken = CancellationTokenSource.Token;
             this.Command = null;
         }
 
         public CrackerBuilder(CrackerBuilder builder)
         {
-            this.CancellationTokenSource = builder.CancellationTokenSource;
-            this.CancellationToken = builder.CancellationToken;
             this.Command = builder.Command;
         }
 
@@ -33,19 +26,18 @@ namespace Cracker
         private void AddCommand(WrapperBase command)
         {
             command.InnerWrapper = Command;
-            command.CancellationToken = CancellationToken;
             this.Command = command;
         }
 
         public CrackerBuilder Timeout(int timeoutMilliseconds)
         {
-            var command = new TimeoutWrapper(CancellationTokenSource, TimeSpan.FromMilliseconds(timeoutMilliseconds));
+            var command = new TimeoutWrapper(TimeSpan.FromMilliseconds(timeoutMilliseconds));
             AddCommand(command);
             return this;
         }
         public CrackerBuilder Timeout(TimeSpan period)
         {
-            var command = new TimeoutWrapper(CancellationTokenSource, period);
+            var command = new TimeoutWrapper(period);
             AddCommand(command);
             return this;
         }
@@ -63,7 +55,6 @@ namespace Cracker
             AddCommand(command);
             return this;
         }
-
         public CrackerBuilder Throttle(int callLimit, int timePeriodMilliseconds)
         {
             var command = new ThrottleWrapper(callLimit, TimeSpan.FromMilliseconds(timePeriodMilliseconds));
@@ -72,28 +63,31 @@ namespace Cracker
         }
 
 
-
         public async Task ExecuteAsync(Func<CancellationToken, Task> func)
         {
+            using var source = new CancellationTokenSource();
+
             if (this.Command == null)
             {
-                await func(this.CancellationToken);
+                await func(source.Token);
             }
             else
             {
-                await this.Command.ExecuteAsync(func);
+                await this.Command.ExecuteAsync(func, source.Token);
             }
         }
 
         public async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func)
         {
+            using var source = new CancellationTokenSource();
+
             if (this.Command == null)
             {
-                return await func(this.CancellationToken);
+                return await func(source.Token);
             }
             else
             {
-                return await this.Command.ExecuteAsync<T>(func);
+                return await this.Command.ExecuteAsync<T>(func, source.Token);
             }
         }
     }

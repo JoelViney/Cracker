@@ -33,20 +33,26 @@ namespace Cracker
         }
 
         [TestMethod]
+        [ExpectedException(typeof(TaskCanceledException))]
         public async Task TimeoutBeforeRetry()
         {
             // Arrange
             var job = new SlowJobStub(milliseconds: 100);
 
             // Act
-            await new CrackerBuilder()
-                .Timeout(20)
-                .Retry(retryAttempts: 3)
-                .ExecuteAsync(job.ExecuteAsync);
-
-            // Assert
-            Assert.IsFalse(job.Completed);
-            Assert.AreEqual(1, job.Attempts);
+            try
+            {
+                await new CrackerBuilder()
+                    .Timeout(20)
+                    .Retry(retryAttempts: 3)
+                    .ExecuteAsync(job.ExecuteAsync);
+            }
+            finally
+            {
+                // Assert
+                Assert.IsFalse(job.Completed);
+                Assert.AreEqual(1, job.Attempts);
+            }
         }
     }
 }

@@ -7,35 +7,36 @@ namespace Cracker.Wrappers
     /// </summary>
     internal class TimeoutWrapper : WrapperBase
     {
-        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly TimeSpan _period;
 
-        public TimeoutWrapper(CancellationTokenSource cancellationTokenSource, TimeSpan period)
+        public TimeoutWrapper(TimeSpan period)
         {
-            _cancellationTokenSource = cancellationTokenSource;
             _period = period;
         }
 
-        public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func)
+        public override async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken token)
         {
             Debug.WriteLine("Timeout Loaded.");
 
-            var ms = (int)_period.TotalMilliseconds;
-            using var timer = new Timer(TimerCallback, new AutoResetEvent(false), ms, 0);
+            // Create a new token source so we can cancel it in the timeout.
+            using var timeoutTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            return await this.ExecuteInternalAsync(func);
+            var ms = (int)_period.TotalMilliseconds;
+            using var timer = new Timer(TimerCallback, timeoutTokenSource, ms, Timeout.Infinite);
+            
+            return await this.ExecuteInternalAsync(func, timeoutTokenSource.Token);
         }
 
-        private void TimerCallback(object? state)
+        private void TimerCallback(object? obj)
         {
-            if (state is AutoResetEvent)
-            {
-                Debug.WriteLine("TimerCallback AutoResetEvent.");
-            }
+            var tokenSource = obj as CancellationTokenSource;
 
             Debug.WriteLine("Timeout triggered!");
 
-            _cancellationTokenSource.Cancel(true);
+            if (tokenSource != null)
+            {
+                tokenSource.Cancel(true);
+            }
         }
     }
 }

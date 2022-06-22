@@ -6,42 +6,40 @@ namespace Cracker.Wrappers
 {
     internal abstract class WrapperBase
     {
-        public CancellationToken CancellationToken { get; internal set; }
-
         internal WrapperBase? InnerWrapper { get; set; }
 
-        public async Task ExecuteAsync(Func<CancellationToken, Task> func)
+        public async Task ExecuteAsync(Func<CancellationToken, Task> func, CancellationToken token)
         {
             var teeFunc = TaskHelper.WrapTaskInGenericObject(func);
 
-            await ExecuteAsync<object?>(teeFunc);
+            await ExecuteAsync<object?>(teeFunc, token);
         }
 
 
-        public abstract Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func);
+        public abstract Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken token);
 
 
-        protected async Task ExecuteInternalAsync(Func<CancellationToken, Task> func)
+        protected async Task ExecuteInternalAsync(Func<CancellationToken, Task> func, CancellationToken token)
         {
             if (this.InnerWrapper != null)
             {
-                await this.InnerWrapper.ExecuteAsync(func);
+                await this.InnerWrapper.ExecuteAsync(func, token);
             }
             else
             {
-                await func(this.CancellationToken);
+                await func(token);
             }
         }
 
-        protected async Task<T> ExecuteInternalAsync<T>(Func<CancellationToken, Task<T>> func)
+        protected async Task<T> ExecuteInternalAsync<T>(Func<CancellationToken, Task<T>> func, CancellationToken token)
         {
             if (this.InnerWrapper != null)
             {
-                return await this.InnerWrapper.ExecuteAsync<T>(func);
+                return await this.InnerWrapper.ExecuteAsync<T>(func, token);
             }
             else
             {
-                return await func(this.CancellationToken);
+                return await func(token);
             }
         }
     }

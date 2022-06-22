@@ -8,15 +8,17 @@ namespace Cracker.Stubs
         public int Attempts { get; internal set; }
 
         private readonly int _milliseconds;
+        private readonly bool _throwCancelledException;
 
         /// <param name="milliseconds">How long the Execute will take to return a result.</param>
-        public SlowJobStub(int milliseconds)
+        public SlowJobStub(int milliseconds, bool throwCancelledException = true)
         {
             _milliseconds = milliseconds;
+            _throwCancelledException = throwCancelledException;
             this.Attempts = 0;
         }
 
-        public async Task ExecuteAsync(CancellationToken cancellationToken)
+        public async Task<bool> ExecuteAsync(CancellationToken cancellationToken)
         {
             Debug.WriteLine("ExecuteAsync...");
 
@@ -33,16 +35,23 @@ namespace Cracker.Stubs
                     {
                         this.Completed = false;
                         Debug.WriteLine("Method Cancelled!");
-                        return;
+
+                        if (_throwCancelledException)
+                        {
+                            throw new TaskCanceledException();
+                        }
+
+                        return await Task.FromResult<bool>(false);
                     }
 
                     Debug.WriteLine("Sleep...");
-                    await Task.Delay(10);
+                    await Task.Delay(10, cancellationToken);
                 }
             }
 
             this.Completed = true;
-            await Task.FromResult<object?>(null);
+
+            return await Task.FromResult<bool>(true);
         }
     }
 }
