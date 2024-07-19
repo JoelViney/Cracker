@@ -1,9 +1,11 @@
 
 # Cracker
 
-I saw some [Polly](https://github.com/App-vNext/Polly) code in an application and wondered why it was so complex... I deliberately didnt look at the Polly source code as it would throw my implementation.
+I saw some [Polly](https://github.com/App-vNext/Polly) code in an application and wondered why it was so complex... 
 
 I had previously written my own [throttle and retry](https://github.com/JoelViney/XeroThrottleAndRetry) code for Xero so I thought I would try rolling my own version with Timeout for fun.
+
+I deliberately didnt look at the Polly source code as it would throw my implementation.
 
 Example:
 

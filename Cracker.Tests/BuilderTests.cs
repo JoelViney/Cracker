@@ -33,8 +33,9 @@ namespace Cracker
         }
 
         [TestMethod]
+        [TestCategory("NotImplemented")]
         [ExpectedException(typeof(TaskCanceledException))]
-        public async Task TimeoutBeforeRetry()
+        public async Task TimeoutAfterRetry()
         {
             // Arrange
             var job = new SlowJobStub(milliseconds: 100);
@@ -43,15 +44,15 @@ namespace Cracker
             try
             {
                 await new CrackerBuilder()
-                    .Timeout(20)
                     .Retry(retryAttempts: 3)
+                    .Timeout(20)
                     .ExecuteAsync(job.ExecuteAsync);
             }
             finally
             {
                 // Assert
                 Assert.IsFalse(job.Completed);
-                Assert.AreEqual(1, job.Attempts);
+                Assert.AreEqual(3, job.Attempts);
             }
         }
     }

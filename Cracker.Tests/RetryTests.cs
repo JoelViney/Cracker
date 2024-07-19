@@ -151,7 +151,7 @@ namespace Cracker
                 .WhenException<FailingException>()
                 .ExecuteAsync(job.ExecuteAsync);
 
-            // Assert - Expecting an exception
+            // Assert
             Assert.AreEqual(2, job.Attempts);
         }
 
@@ -167,7 +167,7 @@ namespace Cracker
                 .WhenResult<Boolean>(x => x == false)
                 .ExecuteAsync(job.ExecuteAsync);
 
-            // Assert - Expecting an exception
+            // Assert
             Assert.IsTrue(result);
         }
     }
